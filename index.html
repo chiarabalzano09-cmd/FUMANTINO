@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il Fumantino — San Giuseppe Jato</title>
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --card-bg: #ffffff;
+            --text-color: #2c2a29;
+            --text-muted: #666360;
+            --border-color: #e3ded5;
+            --primary: #8b261e;
+            --primary-hover: #6d1d17;
+            --accent: #d4a373;
+            --nav-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121110;
+            --card-bg: #1c1a18;
+            --text-color: #f4f1ea;
+            --text-muted: #a19a90;
+            --border-color: #2e2a27;
+            --primary: #c94a40;
+            --primary-hover: #b0382f;
+            --accent: #e5b388;
+            --nav-bg: #181614;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; transition: background 0.2s, color 0.2s; }
+        body { background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Top Bar */
+        .top-header {
+            background-color: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand-title { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .brand-sub { font-size: 11px; color: var(--text-muted); }
+        .header-controls { display: flex; gap: 10px; align-items: center; }
+        .theme-toggle-btn, .home-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Schermata Iniziale / Home finestre */
+        .screen { display: none; flex: 1; padding: 20px; overflow-y: auto; }
+        .screen.active { display: flex; flex-direction: column; }
+
+        .home-hero {
+            text-align: center;
+            padding: 30px 10px;
+            margin-bottom: 20px;
+        }
+        .home-hero h1 { font-size: 24px; margin-bottom: 6px; }
+        .home-hero p { font-size: 14px; color: var(--text-muted); }
+
+        .menu-windows-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .window-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: transform 0.1s, border-color 0.2s;
+        }
+        .window-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+        .window-card .icon { font-size: 32px; margin-bottom: 12px; }
+        .window-card h3 { font-size: 16px; margin-bottom: 6px; }
+        .window-card p { font-size: 12px; color: var(--text-muted); }
+
+        /* Componenti Comuni */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .section-header h2 { font-size: 18px; }
+
+        /* Finestra Tavoli */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+        }
+        .table-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .table-box.occupied { border-color: var(--primary); background-color: rgba(139, 38, 30, 0.05); }
+        .table-box h4 { font-size: 15px; margin-bottom: 4px; }
+        .table-box span { font-size: 11px; color: var(--text-muted); }
+
+        /* Finestra Ordinazioni (Blok notes + Menu Ampio) */
+        .order-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            height: 100%;
+            overflow: hidden;
+        }
+        @media(max-width: 768px) { .order-layout { grid-template-columns: 1fr; overflow-y: auto; } }
+
+        .menu-sections-container { overflow-y: auto; padding-right: 5px; }
+        .category-title { font-size: 14px; font-weight: bold; color: var(--primary); margin: 15px 0 8px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+        .menu-item-row {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .menu-item-info h5 { font-size: 13px; }
+        .menu-item-info span { font-size: 11px; color: var(--text-muted); }
+        .add-item-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notepad-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            max-height: 480px;
+        }
+        .notepad-items { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .notepad-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 0.5px solid var(--border-color);
+        }
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Finestra Cassa & Scontrino */
+        .cash-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        @media(max-width: 768px) { .cash-layout { grid-template-columns: 1fr; } }
+
+        .receipt-box {
+            background: #fff;
+            color: #111;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            font-size: 12px;
+        }
+        .receipt-center { text-align: center; margin-bottom: 10px; }
+        .receipt-line { display: flex; justify-content: space-between; margin: 4px 0; }
+        .receipt-total { border-top: 1px dashed #333; margin-top: 10px; padding-top: 6px; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- Top Bar fissa -->
+    <div class="top-header">
+        <div>
+            <div class="brand-title">Il Fumantino</div>
+            <div class="brand-sub">San Giuseppe Jato (PA) • Gestione Sala & Cassa</div>
+        </div>
+        <div class="header-controls">
+            <button class="home-btn" onclick="openScreen('home')">🏠 Menu Principale</button>
+            <button class="theme-toggle-btn" onclick="toggleTheme()">🌓 Tema</button>
+        </div>
+    </div>
+
+    <!-- ================= 1. HOME SCREEN ================= -->
+    <div id="screen-home" class="screen active">
+        <div class="home-hero">
+            <h1>Benvenuta in Sala, Cameriera! 📋</h1>
+            <p>Seleziona una sezione per iniziare a lavorare al locale.</p>
+        </div>
+        <div class="menu-windows-grid">
+            <div class="window-card" onclick="openScreen('tables')">
+                <div class="icon">🪑</div>
+                <h3>Gestione Tavoli (1 - 20)</h3>
+                <p>Controlla lo stato dei tavoli e apri le comande della sala.</p>
+            </div>
+            <div class="window-card" onclick="openScreen('presentation-menu')">
+                <div class="icon">📖</div>
+                <h3>Presentazione Menu al Cliente</h3>
+                <p>Mostra ai clienti la disponibilità di piatti tipici e pizzeria.</p>
+            </div>
+            <div class="window-card" onclick="openScreen('cashier')">
+                <div class="icon">💶</div>
+                <h3>Cassa & Scontrini Fiscali</h3>
+                <p>Gestisci i pagamenti, calcola il resto ed emetti lo scontrino.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. TAVOLI SCREEN ================= -->
+    <div id="screen-tables" class="screen">
+        <div class="section-header">
+            <h2>Gestione Sala (20 Tavoli)</h2>
+        </div>
+        <p style="margin-bottom: 15px; font-size: 13px; color: var(--text-muted);">Clicca su un tavolo per ordinare o incassare.</p>
+        <div class="tables-grid" id="tables-grid-container">
+            <!-- Generato da JS -->
+        </div>
+    </div>
+
+    <!-- ================= 3. ORDINAZIONI SCREEN ================= -->
+    <div id="screen-order" class="screen">
+        <div class="section-header">
+            <h2 id="order-title">Comanda Tavolo</h2>
+            <button class="home-btn" onclick="openScreen('tables')">Indietro ai Tavoli</button>
+        </div>
+        <div class="order-layout">
+            <!-- Catalogo Menu Ampio -->
+            <div class="menu-sections-container" id="full-menu-container">
+                <!-- Generato da JS -->
+            </div>
+            <!-- Blocco Note (Comanda Corrente) -->
+            <div class="notepad-container">
+                <h3 style="font-size: 14px; margin-bottom: 10px;">Blok Notes Ordinazione</h3>
+                <div class="notepad-items" id="notepad-items-list">
+                    <p style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 20px;">Nessun piatto aggiunto</p>
+                </div>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-bottom:10px;">
+                        <span>Totale Comanda:</span>
+                        <span id="notepad-total">€ 0.00</span>
+                    </div>
+                    <button class="primary-btn" onclick="saveOrder()">Invia in Cucina / Salva</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 4. PRESENTAZIONE MENU (Per spiegare ai clienti) ================= -->
+    <div id="screen-presentation-menu" class="screen">
+        <div class="section-header">
+            <h2>📖 Menu Completo "Il Fumantino"</h2>
+            <button class="home-btn" onclick="openScreen('home')">Chiudi</button>
+        </div>
+        <p style="margin-bottom: 15px; font-size: 13px; color: var(--text-muted);">Usa questa schermata per illustrare piatti e prezzi ai clienti al tavolo.</p>
+        <div id="client-menu-view" style="max-width: 700px; margin: 0 auto; width: 100%;"></div>
+    </div>
+
+    <!-- ================= 5. CASSA & SCONTRINO SCREEN ================= -->
+    <div id="screen-cashier" class="screen">
+        <div class="section-header">
+            <h2 id="cashier-title">Cassa & Pagamento</h2>
+            <button class="home-btn" onclick="openScreen('tables')">Torna ai Tavoli</button>
+        </div>
+        <div class="cash-layout">
+            <div>
+                <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <h3 style="font-size: 14px; margin-bottom: 10px;">Riepilogo Conto</h3>
+                    <div id="cashier-items-summary" style="font-size: 13px; margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></div>
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 15px; display:flex; justify-content:space-between;">
+                        <span>Totale Dovuto:</span>
+                        <span id="cashier-total-amount" style="color: var(--primary);">€ 0.00</span>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; display:block; margin-bottom:4px;">Contanti Ricevuti dal Cliente (€):</label>
+                        <input type="number" id="cash-given" placeholder="Es. 50.00" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); background: var(--bg-color); color: var(--text-color); font-size:14px;" oninput="calculateChange()">
+                    </div>
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 15px; display:flex; justify-content:space-between;">
+                        <span>Resto da dare:</span>
+                        <span id="cash-change">€ 0.00</span>
+                    </div>
+                    <button class="primary-btn" onclick="issueReceipt()">Conferma Pagamento & Emetti Scontrino</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="font-size: 14px; margin-bottom: 10px;">Anteprima Scontrino Fiscale</h3>
+                <div class="receipt-box" id="receipt-preview">
+                    <div class="receipt-center">
+                        <b>RISTORANTE PIZZERIA "IL FUMANTINO"</b><br>
+                        Via Vittorio Emanuele • San Giuseppe Jato (PA)<br>
+                        P.IVA 06789120824<br>
+                        ----------------------------------
+                    </div>
+                    <div id="receipt-details">
+                        <p style="text-align:center; color:#777; margin: 20px 0;">Nessun pagamento registrato</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- MENU AMPIO COMPLETO ---
+        const restaurantMenu = [
+            {
+                category: "Antipasti Siciliani",
+                items: [
+                    { id: "ant_1", name: "Pane Cunzatu Tradizionale", price: 6.00, desc: "Pane caldo, olio extravergine, caciocavallo, acciughe, pomodoro e origano" },
+                    { id: "ant_2", name: "Caponata di Melanzane Siciliana", price: 7.50, desc: "Melanzane fritte, sedano, cipolla, capperi, olive verdi e agrodolce" },
+                    { id: "ant_3", name: "Arancinette Miste (3 pz)", price: 5.00, desc: "Ragù, burro e pistacchio" },
+                    { id: "ant_4", name: "Tagliere 'Il Fumantino' (Salumi e Formaggi Locali)", price: 12.00, desc: "Selezione di formaggi dei Monti Sicani e salumi artigianali" }
+                ]
+            },
+            {
+                category: "Primi Piatti",
+                items: [
+                    { id: "pri_1", name: "Pasta alla Norma", price: 9.00, desc: "Maccheroni con melanzane fritte, ricotta salata e pomodoro fresco" },
+                    { id: "pri_2", name: "Busiate con Pesto alla Trapanese", price: 10.00, desc: "Pasta fresca con mandorle, pomodoro, aglio, basilico e pecorino" },
+                    { id: "pri_3", name: "Spaghetti alle Vongole e Bottarga", price: 13.50, desc: "Vongole veraci, aglio, sfumata di vino bianco e bottarga di tonno grattugiata" },
+                    { id: "pri_4", name: "Risotto ai Funghi Porcini e Salsiccia", price: 11.00, desc: "Mantecato con burro di montagna e caciocavallo ragusano" }
+                ]
+            },
+            {
+                category: "Secondi Piatti",
+                items: [
+                    { id: "sec_1", name: "Bistecca di Vitella alla Griglia", price: 14.00, desc: "Carne locale selezionata con contorno di patate al forno" },
+                    { id: "sec_2", name: "Filetto di Spada alla Messinese", price: 15.50, desc: "Pomodorini, capperi di Pantelleria, olive e origano" },
+                    { id: "sec_3", name: "Salsiccia Paesana ai Ferri", price: 9.50, desc: "Servita con verdura cotta di stagione saltata" }
+                ]
+            },
+            {
+                category: "Pizze Classiche & Speciali",
+                items: [
+                    { id: "piz_1", name: "Pizza Margherita", price: 6.50, desc: "Pomodoro San Marzano, fior di latte, basilico fresco e olio EVO" },
+                    { id: "piz_2", name: "Pizza Marinara", price: 5.50, desc: "Pomodoro, aglio rosso di Nubia, origano e olio extravergine" },
+                    { id: "piz_3", name: "Pizza 'Il Fumantino' (Specialità)", price: 9.50, desc: "Fior di latte, crema di pistacchio di Bronte, mortadella e granella di pistacchio" },
+                    { id: "piz_4", name: "Pizza Diavola Piccante", price: 8.00, desc: "Pomodoro, fior di latte e spianata calabra piccante" },
+                    { id: "piz_5", name: "Pizza Normana", price: 8.50, desc: "Pomodoro, fior di latte, melanzane fritte e ricotta salata grattugiata" }
+                ]
+            },
+            {
+                category: "Bevande & Dolci",
+                items: [
+                    { id: "bev_1", name: "Acqua Minerale 0.75L", price: 2.50, desc: "Naturale o Frizzante" },
+                    { id: "bev_2", name: "Vino Nero d'Avola DOC (Calice/Bottiglia)", price: 14.00, desc: "Cantina locale siciliana" },
+                    { id: "bev_3", name: "Birra Artigianale Siciliana 33cl", price: 5.00, desc: "Bionda o Rossa" },
+                    { id: "dol_1", name: "Cannolo Siciliano Artigianale", price: 4.50, desc: "Cialda croccante con ricotta di pecora fresca e canditi" },
+                    { id: "dol_2", name: "Trancio di Cassata Siciliana", price: 5.00, desc: "Pan di spagna, ricotta zuccherata e pasta di mandorle" }
+                ]
+            }
+        ];
+
+        // Stato dati tavoli (20 tavoli)
+        let tablesData = {};
+        for(let i=1; i<=20; i++) {
+            tablesData[i] = { items: [], total: 0, status: 'Libero' };
+        }
+
+        let currentActiveTable = null;
+        let currentOrderItems = [];
+
+        // --- GESTIONE SCHERMATE (Finestre separate) ---
+        function openScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenName).classList.add('active');
+
+            if (screenName === 'tables') {
+                renderTablesGrid();
+            } else if (screenName === 'presentation-menu') {
+                renderClientMenu();
+            }
+        }
+
+        // --- DARK / LIGHT MODE ---
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+            } else {
+                body.setAttribute('data-theme', 'light');
+            }
+        }
+
+        // --- RENDER TAVOLI ---
+        function renderTablesGrid() {
+            const container = document.getElementById('tables-grid-container');
+            container.innerHTML = '';
+            for(let i=1; i<=20; i++) {
+                let t = tablesData[i];
+                let isOcc = t.items.length > 0;
+                container.innerHTML += `
+                    <div class="table-box ${isOcc ? 'occupied' : ''}" onclick="selectTable(${i})">
+                        <h4>Tavolo ${i}</h4>
+                        <span>${isOcc ? '€ ' + t.total.toFixed(2) : 'Libero'}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function selectTable(tableNum) {
+            currentActiveTable = tableNum;
+            currentOrderItems = [...tablesData[tableNum].items]; // copia comanda esistente
+            document.getElementById('order-title').innerText = `Comanda Tavolo ${tableNum}`;
+            renderFullMenu();
+            renderNotepad();
+            openScreen('order');
+        }
+
+        // --- RENDER MENU ORDINAZIONI ---
+        function renderFullMenu() {
+            const container = document.getElementById('full-menu-container');
+            container.innerHTML = '';
+            restaurantMenu.forEach(cat => {
+                let html = `<div class="category-title">${cat.category}</div>`;
+                cat.items.forEach(item => {
+                    html += `
+                        <div class="menu-item-row">
+                            <div class="menu-item-info">
+                                <h5>${item.name}</h5>
+                                <span>€ ${item.price.toFixed(2)} • ${item.desc}</span>
+                            </div>
+                            <button class="add-item-btn" onclick="addToOrder('${item.id}', '${item.name}', ${item.price})">+</button>
+                        </div>
+                    `;
+                });
+                container.innerHTML += html;
+            });
+        }
+
+        function addToOrder(id, name, price) {
+            currentOrderItems.push({ id, name, price });
+            renderNotepad();
+        }
+
+        function removeFromOrder(index) {
+            currentOrderItems.splice(index, 1);
+            renderNotepad();
+        }
+
+        function renderNotepad() {
+            const listContainer = document.getElementById('notepad-items-list');
+            const totalContainer = document.getElementById('notepad-total');
+            
+            if (currentOrderItems.length === 0) {
+                listContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 20px;">Nessun piatto aggiunto</p>`;
+                totalContainer.innerText = `€ 0.00`;
+                return;
+            }
+
+            let sum = 0;
+            listContainer.innerHTML = '';
+            currentOrderItems.forEach((item, idx) => {
+                sum += item.price;
+                listContainer.innerHTML += `
+                    <div class="notepad-row">
+                        <span>${item.name}</span>
+                        <span>€ ${item.price.toFixed(2)} <button onclick="removeFromOrder(${idx})" style="background:none; border:none; color:var(--primary); cursor:pointer; margin-left:8px; font-weight:bold;">✕</button></span>
+                    </div>
+                `;
+            });
+            totalContainer.innerText = `€ ${sum.toFixed(2)}`;
+        }
+
+        function saveOrder() {
+            if (currentActiveTable === null) return;
+            let sum = currentOrderItems.reduce((acc, curr) => acc + curr.price, 0);
+            tablesData[currentActiveTable] = {
+                items: [...currentOrderItems],
+                total: sum,
+                status: currentOrderItems.length > 0 ? 'Occupato' : 'Libero'
+            };
+            alert(`Comanda del Tavolo ${currentActiveTable} salvata con successo!`);
+            openScreen('tables');
+        }
+
+        // --- PRESENTAZIONE MENU CLIENTE ---
+        function renderClientMenu() {
+            const container = document.getElementById('client-menu-view');
+            container.innerHTML = '';
+            restaurantMenu.forEach(cat => {
+                let html = `<div style="font-weight:bold; color:var(--primary); font-size:15px; margin: 15px 0 8px 0; border-bottom: 2px solid var(--primary); padding-bottom:4px;">${cat.category}</div>`;
+                cat.items.forEach(item => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; border-bottom: 1px dashed var(--border-color); padding-bottom:4px;">
+                            <div><b>${item.name}</b><br><span style="font-size:11px; color:var(--text-muted);">${item.desc}</span></div>
+                            <div style="font-weight:bold; color:var(--primary); white-space:nowrap; margin-left:10px;">€ ${item.price.toFixed(2)}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML += html;
+            });
+        }
+
+        // --- CASSA E SCONTRINO ---
+        // Funzione per aprire la cassa direttamente da un tavolo o dal menu principale
+        function openCashierForTable(tableNum) {
+            // Se vuoi passare direttamente alla cassa per pagare un tavolo
+            currentActiveTable = tableNum;
+            let t = tablesData[tableNum];
+            document.getElementById('cashier-title').innerText = `Cassa - Tavolo ${tableNum}`;
+            
+            let summaryContainer = document.getElementById('cashier-items-summary');
+            let totalAmountElem = document.getElementById('cashier-total-amount');
+            
+            if (t.items.length === 0) {
+                summaryContainer.innerHTML = `<p>Il tavolo non ha consumazioni attive.</p>`;
+                totalAmountElem.innerText = `€ 0.00`;
+                return;
+            }
+
+            let html = '';
+            t.items.forEach(i => {
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>${i.name}</span><span>€ ${i.price.toFixed(2)}</span></div>`;
+            });
+            summaryContainer.innerHTML = html;
+            totalAmountElem.innerText = `€ ${t.total.toFixed(2)}`;
+            document.getElementById('cash-given').value = '';
+            document.getElementById('cash-change').innerText = `€ 0.00`;
+            
+            openScreen('cashier');
+        }
+
+        function calculateChange() {
+            if (currentActiveTable === null) return;
+            let total = tablesData[currentActiveTable].total;
+            let given = parseFloat(document.getElementById('cash-given').value) || 0;
+            let change = given - total;
+            document.getElementById('cash-change').innerText = change >= 0 ? `€ ${change.toFixed(2)}` : `€ 0.00 (Mancano € ${Math.abs(change).toFixed(2)})`;
+        }
+
+        function issueReceipt() {
+            if (currentActiveTable === null) return;
+            let t = tablesData[currentActiveTable];
+            if (t.total === 0) {
+                alert("Nessun importo da pagare per questo tavolo.");
+                return;
+            }
+
+            let now = new Date();
+            let dateStr = now.toLocaleDateString('it-IT') + ' ' + now.toLocaleTimeString('it-IT');
+
+            let receiptHTML = `
+                <div class="receipt-center">
+                    <b>RISTORANTE PIZZERIA "IL FUMANTINO"</b><br>
+                    Via Vittorio Emanuele • San Giuseppe Jato (PA)<br>
+                    P.IVA 06789120824<br>
+                    Data: ${dateStr}<br>
+                    Tavolo: ${currentActiveTable}<br>
+                    ----------------------------------
+                </div>
+            `;
+
+            t.items.forEach(i => {
+                receiptHTML += `<div class="receipt-line"><span>${i.name}</span><span>€ ${i.price.toFixed(2)}</span></div>`;
+            });
+
+            receiptHTML += `
+                <div class="receipt-total receipt-line">
+                    <span>TOTALE COMPLESSIVO:</span>
+                    <span>€ ${t.total.toFixed(2)}</span>
+                </div>
+                <div class="receipt-center" style="margin-top:15px; font-size:10px;">
+                    Documento Commerciale di Vendita<br>
+                    Grazie e Arrivederci a Il Fumantino!
+                </div>
+            `;
+
+            document.getElementById('receipt-details').innerHTML = receiptHTML;
+
+            // Libera il tavolo dopo il pagamento
+            tablesData[currentActiveTable] = { items: [], total: 0, status: 'Libero' };
+            alert(`Pagamento registrato con successo! Scontrino emesso per il Tavolo ${currentActiveTable}.`);
+        }
+    </script>
+</body>
+</html>
